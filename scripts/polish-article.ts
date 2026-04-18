@@ -3,7 +3,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
-import simpleGit, { SimpleGit } from 'simple-git';
+import simpleGit from 'simple-git';
+import type { SimpleGit } from 'simple-git';
 
 const MINIMAX_API_URL = 'https://api.minimax.chat/v1/text/chatcompletion_v2';
 const MODEL_NAME = 'MiniMax-Text-01';
