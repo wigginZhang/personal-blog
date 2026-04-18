@@ -3,8 +3,104 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
+import { execSync } from 'child_process';
 import simpleGit from 'simple-git';
 import type { SimpleGit } from 'simple-git';
+
+// === 图片处理函数 ===
+const IMAGES_DIR = path.join(process.cwd(), 'public', 'images');
+
+function ensureImagesDir() {
+  if (!fs.existsSync(IMAGES_DIR)) {
+    fs.mkdirSync(IMAGES_DIR, { recursive: true });
+  }
+}
+
+function hasImageInClipboard(): boolean {
+  try {
+    const result = execSync('osascript -e "try" -e "clipboard info" -e "end try"', { encoding: 'utf-8' });
+    return result.includes('PNG') || result.includes('TIFF');
+  } catch {
+    return false;
+  }
+}
+
+function generateImageFilename(): string {
+  const now = new Date();
+  const timestamp = now.toISOString().replace(/[-:T]/g, '').slice(0, 15);
+  const random = Math.random().toString(36).substring(2, 8);
+  return `${timestamp}-${random}.png`;
+}
+
+async function saveImageFromClipboard(): Promise<string> {
+  ensureImagesDir();
+  const filename = generateImageFilename();
+  const filepath = path.join(IMAGES_DIR, filename);
+
+  execSync(`pngpaste "${filepath}"`);
+
+  return filename;
+}
+
+function copyToClipboard(text: string): void {
+  execSync(`printf '%s' "${text}" | pbcopy`);
+}
+
+function replaceImageMarkers(content: string, imageFilenames: string[]): { content: string; imagesUsed: number } {
+  let imagesUsed = 0;
+  let result = content;
+
+  imageFilenames.forEach((filename, index) => {
+    const marker = `需要图${index + 1}`;
+    const imageMarkdown = `![image](./images/${filename})`;
+
+    if (result.includes(marker)) {
+      result = result.replace(marker, imageMarkdown);
+      imagesUsed++;
+    }
+  });
+
+  if (imagesUsed < imageFilenames.length) {
+    const remaining = imageFilenames.slice(imagesUsed);
+    remaining.forEach(filename => {
+      const imageMarkdown = `![image](./images/${filename})`;
+      result = result.replace(/需要图/, imageMarkdown);
+      imagesUsed++;
+    });
+  }
+
+  return { content: result, imagesUsed };
+}
+
+function appendImagesToEnd(content: string, imageFilenames: string[]): string {
+  if (imageFilenames.length === 0) return content;
+
+  const imagesMarkdown = imageFilenames
+    .map(f => `![image](./images/${f})`)
+    .join('\n');
+
+  return content.trim() + '\n\n' + imagesMarkdown + '\n';
+}
+
+function processContentWithImages(
+  rawText: string,
+  polishedContent: string,
+  imageFilenames: string[]
+): { finalContent: string; imagesUsed: number } {
+  if (imageFilenames.length === 0) {
+    return { finalContent: polishedContent, imagesUsed: 0 };
+  }
+
+  const hasMarkers = /需要图\d/.test(rawText);
+
+  if (hasMarkers) {
+    const { content, imagesUsed } = replaceImageMarkers(polishedContent, imageFilenames);
+    return { finalContent: content, imagesUsed };
+  } else {
+    const finalContent = appendImagesToEnd(polishedContent, imageFilenames);
+    return { finalContent, imagesUsed: imageFilenames.length };
+  }
+}
 
 const MINIMAX_API_URL = 'https://api.minimax.chat/v1/text/chatcompletion_v2';
 const MODEL_NAME = 'MiniMax-Text-01';
@@ -211,10 +307,34 @@ async function main() {
       const polished = await polishText(rawText, apiKey);
       const { filename, content } = parsePolishedOutput(polished);
 
+      const clipboardHasImage = hasImageInClipboard();
+      const imageFilenames: string[] = [];
+
+      if (clipboardHasImage) {
+        console.log('\n📷 检测到剪贴板有图片，正在保存...');
+        const imgFilename = await saveImageFromClipboard();
+        imageFilenames.push(imgFilename);
+      }
+
+      const { finalContent, imagesUsed } = processContentWithImages(
+        rawText,
+        content,
+        imageFilenames
+      );
+
       console.log('=== Polished Result ===\n');
       console.log(`Suggested filename: ${filename}`);
       console.log('\n--- Content ---\n');
-      console.log(content);
+      console.log(finalContent);
+
+      if (imagesUsed > 0) {
+        console.log('\n📷 检测到' + imagesUsed + '张图片，已保存到 public/images/');
+        if (imageFilenames.length > 0) {
+          const link = `![image](./images/${imageFilenames[0]})`;
+          copyToClipboard(link);
+          console.log('🔗 已复制图片链接到剪贴板');
+        }
+      }
 
       let currentContent = content;
       let currentFilename = filename;
