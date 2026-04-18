@@ -1,0 +1,105 @@
+---
+import BaseLayout from '../../components/BaseLayout.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const articles = await getCollection('articles', ({ data }) => !data.draft);
+
+  const tagSet = new Set<string>();
+  articles.forEach(article => {
+    article.data.tags?.forEach(tag => tagSet.add(tag));
+  });
+
+  return Array.from(tagSet).map(tag => ({
+    params: { tag },
+    props: {
+      tag,
+      articles: articles
+        .filter(article => article.data.tags?.includes(tag))
+        .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+    }
+  }));
+}
+
+const { tag, articles } = Astro.props;
+---
+
+<BaseLayout title={`Tag: ${tag}`} description={`Articles tagged with ${tag}`}>
+  <section class="content-section">
+    <div class="content">
+      <a href="/tags" class="back-link">&larr; Back to Tags</a>
+      <h1 class="page-title">Tag: {tag}</h1>
+      <p class="tag-description">{articles.length} article{articles.length !== 1 ? 's' : ''} tagged with "{tag}"</p>
+      <div class="articles-grid">
+        {articles.map(article => (
+          <ArticleCard
+            title={article.data.title}
+            excerpt={article.data.description}
+            slug={article.slug}
+            date={article.data.date.toISOString()}
+            tags={article.data.tags}
+          />
+        ))}
+      </div>
+      {articles.length === 0 && (
+        <p class="empty-state">No articles with this tag yet.</p>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .content-section {
+    max-width: var(--max-width-listing);
+    margin: 0 auto;
+    padding: var(--space-3xl) var(--space-lg);
+    padding-top: calc(60px + var(--space-3xl));
+  }
+
+  .content {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: var(--space-2xl);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-bottom: var(--space-lg);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+
+  .back-link:hover {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .page-title {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+    line-height: 1.2;
+  }
+
+  .tag-description {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xl);
+  }
+
+  .articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .empty-state {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: var(--space-2xl);
+  }
+</style>
