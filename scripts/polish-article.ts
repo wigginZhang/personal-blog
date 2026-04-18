@@ -320,12 +320,10 @@ async function main() {
         imageFilenames
       );
 
-      const content = finalContent;
-
       console.log('=== Polished Result ===\n');
       console.log(`Suggested filename: ${filename}`);
       console.log('\n--- Content ---\n');
-      console.log(content);
+      console.log(finalContent);
 
       if (imagesUsed > 0) {
         console.log('\n📷 检测到' + imagesUsed + '张图片，已保存到 public/images/');

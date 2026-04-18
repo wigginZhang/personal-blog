@@ -80,7 +80,7 @@ function insertImageToArticle(filepath: string, imageFilename: string): void {
   const markdownImage = `![image](${imagePath})`;
 
   const imageRegex = /!\[(.*?)\]\((.*?)\)/g;
-  const matches = [...content.matchAll(imageRegex)];
+  const matches = Array.from(content.matchAll(imageRegex));
 
   let newContent: string;
   if (matches.length === 0) {
