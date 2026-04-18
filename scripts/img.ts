@@ -60,6 +60,40 @@ function copyToClipboard(text: string): void {
   execSync(`echo '${text}' | pbcopy`);
 }
 
+function getArticleFiles(): { slug: string; filepath: string }[] {
+  const articlesDir = path.join(process.cwd(), 'src', 'content', 'articles');
+  if (!fs.existsSync(articlesDir)) {
+    return [];
+  }
+
+  return fs.readdirSync(articlesDir)
+    .filter(f => f.endsWith('.md'))
+    .map(f => ({
+      slug: f.replace('.md', ''),
+      filepath: path.join(articlesDir, f)
+    }));
+}
+
+function insertImageToArticle(filepath: string, imageFilename: string): void {
+  const content = fs.readFileSync(filepath, 'utf-8');
+  const imagePath = `./images/${imageFilename}`;
+  const markdownImage = `![image](${imagePath})`;
+
+  const imageRegex = /!\[(.*?)\]\((.*?)\)/g;
+  const matches = [...content.matchAll(imageRegex)];
+
+  let newContent: string;
+  if (matches.length === 0) {
+    newContent = content.trim() + '\n\n' + markdownImage + '\n';
+  } else {
+    const lastMatch = matches[matches.length - 1];
+    const lastIndex = content.lastIndexOf(lastMatch[0]) + lastMatch[0].length;
+    newContent = content.slice(0, lastIndex) + '\n' + markdownImage + content.slice(lastIndex);
+  }
+
+  fs.writeFileSync(filepath, newContent, 'utf-8');
+}
+
 registerCommand('paste', 'Paste image from clipboard and copy link', async (args) => {
   const customPath = args[0];
 
@@ -118,6 +152,51 @@ registerCommand('rm', 'Remove an image', async (args) => {
 
   fs.unlinkSync(filepath);
   console.log(`Removed: ${filename}`);
+});
+
+registerCommand('add', 'Add image to existing article', async (args) => {
+  const targetSlug = args[0];
+
+  if (!hasImageInClipboard()) {
+    console.log('📷 No image in clipboard. Paste an image first.');
+    return;
+  }
+
+  const articles = getArticleFiles();
+  if (articles.length === 0) {
+    console.log('No articles found.');
+    return;
+  }
+
+  let targetFile: string;
+
+  if (targetSlug) {
+    const article = articles.find(a => a.slug === targetSlug);
+    if (!article) {
+      console.error(`Article not found: ${targetSlug}`);
+      return;
+    }
+    targetFile = article.filepath;
+    console.log(`📚 Adding to: ${targetSlug}`);
+  } else {
+    console.log('📚 选择文章：\n');
+    articles.forEach((article, i) => {
+      console.log(`  ${i + 1}. ${article.slug}`);
+    });
+    console.log('\n(Interactive selection not implemented yet - use: img add <slug>)');
+    return;
+  }
+
+  const filename = await saveImageFromClipboard();
+  insertImageToArticle(targetFile, filename);
+
+  const imagePath = `./images/${filename}`;
+  const markdown = `![image](${imagePath})`;
+  copyToClipboard(markdown);
+
+  console.log(`📷 Saved: public/images/${filename}`);
+  console.log(`🔗 Inserted into article`);
+  console.log(`🔗 Copied: ${markdown}`);
 });
 
 async function main() {
