@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../components/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import { getCollection } from 'astro:content';
+
+const articles = await getCollection('articles', ({ data }) => !data.draft);
+const sortedArticles = articles.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout title="Home">
+  <Hero title="My Blog" subtitle="Technical thoughts and learning" />
+  <section class="articles-section">
+    <div class="articles-grid">
+      {sortedArticles.map(article => (
+        <ArticleCard
+          title={article.data.title}
+          excerpt={article.data.description}
+          slug={article.slug}
+          date={article.data.date.toISOString()}
+          tags={article.data.tags}
+        />
+      ))}
+    </div>
+    {sortedArticles.length === 0 && (
+      <p class="empty-state">No articles yet. Check back soon!</p>
+    )}
+  </section>
+</BaseLayout>
+
+<style>
+.articles-section {
+  max-width: var(--max-width-listing);
+  margin: 0 auto;
+  padding: var(--space-2xl) var(--space-lg);
+}
+
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-lg);
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: var(--space-3xl);
+}
+</style>
