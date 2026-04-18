@@ -52,7 +52,7 @@ function replaceImageMarkers(content: string, imageFilenames: string[]): { conte
 
   imageFilenames.forEach((filename, index) => {
     const marker = `需要图${index + 1}`;
-    const imageMarkdown = `![image](./images/${filename})`;
+    const imageMarkdown = `![image](/personal-blog/images/${filename})`;
 
     if (result.includes(marker)) {
       result = result.replace(marker, imageMarkdown);
@@ -63,7 +63,7 @@ function replaceImageMarkers(content: string, imageFilenames: string[]): { conte
   if (imagesUsed < imageFilenames.length) {
     const remaining = imageFilenames.slice(imagesUsed);
     remaining.forEach(filename => {
-      const imageMarkdown = `![image](./images/${filename})`;
+      const imageMarkdown = `![image](/personal-blog/images/${filename})`;
       result = result.replace(/需要图/, imageMarkdown);
       imagesUsed++;
     });
@@ -76,7 +76,7 @@ function appendImagesToEnd(content: string, imageFilenames: string[]): string {
   if (imageFilenames.length === 0) return content;
 
   const imagesMarkdown = imageFilenames
-    .map(f => `![image](./images/${f})`)
+    .map(f => `![image](/personal-blog/images/${f})`)
     .join('\n');
 
   return content.trim() + '\n\n' + imagesMarkdown + '\n';
@@ -330,7 +330,7 @@ async function main() {
       if (imagesUsed > 0) {
         console.log('\n📷 检测到' + imagesUsed + '张图片，已保存到 public/images/');
         if (imageFilenames.length > 0) {
-          const link = `![image](./images/${imageFilenames[0]})`;
+          const link = `![image](/personal-blog/images/${imageFilenames[0]})`;
           copyToClipboard(link);
           console.log('🔗 已复制图片链接到剪贴板');
         }

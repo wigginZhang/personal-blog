@@ -68,7 +68,7 @@ function getArticleFiles(): { slug: string; filepath: string }[] {
 
 function insertImageToArticle(filepath: string, imageFilename: string): void {
   const content = fs.readFileSync(filepath, 'utf-8');
-  const imagePath = `./images/${imageFilename}`;
+  const imagePath = `/personal-blog/images/${imageFilename}`;
   const markdownImage = `![image](${imagePath})`;
 
   const imageRegex = /!\[(.*?)\]\((.*?)\)/g;
@@ -95,7 +95,7 @@ registerCommand('paste', 'Paste image from clipboard and copy link', async (args
   }
 
   const filename = await saveImageFromClipboard();
-  const relativePath = customPath || `./images/${filename}`;
+  const relativePath = customPath || `/personal-blog/images/${filename}`;
   const markdown = `![image](${relativePath})`;
 
   copyToClipboard(markdown);
