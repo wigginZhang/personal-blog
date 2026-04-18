@@ -36,7 +36,21 @@ async function saveImageFromClipboard(): Promise<string> {
   ensureImagesDir();
   const filename = generateImageFilename();
   const filepath = path.join(IMAGES_DIR, filename);
-  execSync(`osascript -e 'do shell script "pngpaste " & (POSIX file "${filepath}") as text'`);
+
+  const scriptPath = '/tmp/save_clipboard_image.scpt';
+  const script = `set f to (POSIX file "${filepath}") as text
+try
+  do shell script "pngpaste " & f
+on error
+  set clipData to (clipboard as PNG)
+  set fp to open for access f with write permission
+  write clipData to fp
+  close access fp
+end try`;
+
+  fs.writeFileSync(scriptPath, script);
+  execSync(`osascript ${scriptPath}`);
+
   return filename;
 }
 

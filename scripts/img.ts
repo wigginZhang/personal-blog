@@ -42,16 +42,20 @@ async function saveImageFromClipboard(): Promise<string> {
   const filename = generateImageFilename();
   const filepath = path.join(IMAGES_DIR, filename);
 
-  const script = `
-    set thePath to (POSIX file "${filepath}") as text
-    try
-      do shell script "pngpaste " & thePath
-    on error
-      do shell script "osascript -e 'set the clipboard to (read (POSIX file \\"${filepath}\\") as PNG)'"
-    end try
-  `;
+  // Use simpler approach: write AppleScript to temp file then execute
+  const scriptPath = '/tmp/save_clipboard_image.scpt';
+  const script = `set f to (POSIX file "${filepath}") as text
+try
+  do shell script "pngpaste " & f
+on error
+  set clipData to (clipboard as PNG)
+  set fp to open for access f with write permission
+  write clipData to fp
+  close access fp
+end try`;
 
-  execSync(`osascript -e '${script}'`);
+  fs.writeFileSync(scriptPath, script);
+  execSync(`osascript ${scriptPath}`);
 
   return filename;
 }
