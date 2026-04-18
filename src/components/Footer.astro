@@ -1,0 +1,48 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="footer-inner">
+    <p class="copyright">&copy; {year} Personal Blog</p>
+    <div class="social-links">
+      <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://twitter.com" target="_blank" rel="noopener">Twitter</a>
+    </div>
+  </div>
+</footer>
+
+<style>
+.footer {
+  margin-top: var(--space-3xl);
+  padding: var(--space-xl) var(--space-lg);
+  border-top: 1px solid var(--border);
+}
+
+.footer-inner {
+  max-width: var(--max-width-listing);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.copyright {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.social-links {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.social-links a {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.social-links a:hover {
+  color: var(--accent);
+}
+</style>
