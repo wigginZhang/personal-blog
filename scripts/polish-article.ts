@@ -167,6 +167,16 @@ async function main() {
   console.log('Paste your raw text below.');
   console.log('Press Enter twice (empty line) when done.\n');
 
+  const apiKey = process.env.MINIMAX_API_KEY;
+  if (!apiKey) {
+    console.error('\n❌ Error: MINIMAX_API_KEY environment variable not set\n');
+    console.log('Set it with:');
+    console.log('  export MINIMAX_API_KEY=your-key\n');
+    console.log('Or run with:');
+    console.log('  MINIMAX_API_KEY=your-key npm run polish\n');
+    process.exit(1);
+  }
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -196,11 +206,6 @@ async function main() {
     console.log('\n✍️  Polishing with AI...\n');
 
     try {
-      const apiKey = process.env.MINIMAX_API_KEY;
-      if (!apiKey) {
-        throw new Error('MINIMAX_API_KEY environment variable not set');
-      }
-
       const polished = await polishText(rawText, apiKey);
       const { filename, content } = parsePolishedOutput(polished);
 
