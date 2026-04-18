@@ -6,7 +6,11 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "polish": "tsx scripts/polish-article.ts"
+    "polish": "tsx scripts/polish-article.ts",
+    "img": "tsx scripts/img.ts",
+    "img:add": "tsx scripts/img.ts add",
+    "img:list": "tsx scripts/img.ts list",
+    "img:paste": "tsx scripts/img.ts paste"
   },
   "dependencies": {
     "astro": "^4.0.0",
