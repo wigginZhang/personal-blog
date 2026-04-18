@@ -3,6 +3,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
+import simpleGit, { SimpleGit } from 'simple-git';
 
 const MINIMAX_API_URL = 'https://api.minimax.chat/v1/text/chatcompletion_v2';
 const MODEL_NAME = 'MiniMax-Text-01';
@@ -142,6 +143,25 @@ function saveArticle(filename: string, content: string): string {
   return fullFilename;
 }
 
+async function publishToGitHub(filename: string): Promise<void> {
+  const git: SimpleGit = simpleGit();
+
+  console.log('\n🚀 Publishing to GitHub...\n');
+
+  // Git add
+  await git.add(`src/content/articles/${filename}`);
+
+  // Git commit
+  await git.commit(`docs: add article - ${filename.replace('.md', '')}`);
+
+  // Git push
+  await git.push();
+
+  console.log('✅ Published successfully!');
+  console.log('\n🔗 View your article at:');
+  console.log('https://wigginzhang.github.io/personal-blog/');
+}
+
 async function main() {
   console.log('=== Blog Article Polisher ===\n');
   console.log('Paste your raw text below.');
@@ -226,7 +246,19 @@ Please apply these modifications to the article while keeping the same FILENAME 
       const savedFilename = saveArticle(currentFilename, currentContent);
       console.log(`\n📁 Saved to: src/content/articles/${savedFilename}`);
 
-      // TODO: Add GitHub publish step (Task 6)
+      // Ask about publishing
+      const publishChoice = await askQuestion('\n🚀 Publish to GitHub? (y/n): ');
+
+      if (publishChoice === 'y' || publishChoice === 'yes') {
+        try {
+          await publishToGitHub(savedFilename);
+        } catch (error) {
+          console.error('\n❌ Failed to publish:', error instanceof Error ? error.message : error);
+          console.log('File is saved locally. You can push manually.');
+        }
+      } else {
+        console.log('\n📝 File saved locally. Run "git push" when ready.');
+      }
 
     } catch (error) {
       console.error('Error:', error instanceof Error ? error.message : error);
