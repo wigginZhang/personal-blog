@@ -42,22 +42,8 @@ async function saveImageFromClipboard(): Promise<string> {
   const filename = generateImageFilename();
   const filepath = path.join(IMAGES_DIR, filename);
 
-  // Use bash heredoc to write AppleScript, avoiding escaping issues
-  const bashScript = `bash -c 'cat > /tmp/save_clipboard_$$.scpt << 'SCRIPT'
-set f to POSIX file "${filepath}"
-try
-  do shell script "pngpaste " & quoted form of POSIX path of f
-on error
-  set clipData to (clipboard as PNG)
-  set fp to open for access f with write permission
-  write clipData to fp
-  close access fp
-end try
-SCRIPT
-osascript /tmp/save_clipboard_$$.scpt
-rm /tmp/save_clipboard_$$.scpt'`;
-
-  execSync(bashScript);
+  // Simply use pngpaste directly - it's installed and working
+  execSync(`pngpaste "${filepath}"`);
 
   return filename;
 }
