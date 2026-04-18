@@ -1,13 +1,11 @@
 ---
 title: "The Lazy Person's Guide to Excel Mastery"
-description: "![Lazy Dog](https://example.com/lazy-dog.jpg)"
+description: "## 拥抱“懒惰”的力量"
 date: 2026-04-18
 tags: []
 ---
 
 # The Lazy Person's Guide to Excel Mastery
-
-![Lazy Dog](https://example.com/lazy-dog.jpg)
 ![image](/personal-blog/images/20260418080730.-qbzxs4.png)
 
 ## 拥抱“懒惰”的力量
