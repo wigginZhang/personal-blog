@@ -37,20 +37,21 @@ async function saveImageFromClipboard(): Promise<string> {
   const filename = generateImageFilename();
   const filepath = path.join(IMAGES_DIR, filename);
 
-  const scriptPath = `/tmp/save_clipboard_${Date.now()}.scpt`;
-  const script = `set f to (POSIX file "${filepath}") as text
+  const bashScript = `bash -c 'cat > /tmp/save_clipboard_$$.scpt << 'SCRIPT'
+set f to POSIX file "${filepath}"
 try
-  do shell script "pngpaste " & f
+  do shell script "pngpaste " & quoted form of POSIX path of f
 on error
   set clipData to (clipboard as PNG)
   set fp to open for access f with write permission
   write clipData to fp
   close access fp
-end try`;
+end try
+SCRIPT
+osascript /tmp/save_clipboard_$$.scpt
+rm /tmp/save_clipboard_$$.scpt'`;
 
-  fs.writeFileSync(scriptPath, script);
-  execSync(`osascript ${scriptPath}`);
-  fs.unlinkSync(scriptPath);
+  execSync(bashScript);
 
   return filename;
 }
