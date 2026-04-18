@@ -23,7 +23,7 @@ const formattedDate = article.data.date.toLocaleDateString('en-US', {
 <BaseLayout title={article.data.title} description={article.data.description}>
   <article class="article">
     <header class="article-header">
-      <a href="/" class="back-link">&larr; Back to Home</a>
+      <a href="/personal-blog/" class="back-link">&larr; Back to Home</a>
       <h1 class="article-title">{article.data.title}</h1>
       <div class="article-meta">
         <time datetime={article.data.date.toISOString()}>{formattedDate}</time>

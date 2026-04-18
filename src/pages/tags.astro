@@ -17,12 +17,12 @@ const sortedTags = Array.from(tagCounts.entries()).sort((a, b) => b[1] - a[1]);
 <BaseLayout title="Tags" description="Browse articles by tags">
   <section class="content-section">
     <div class="content">
-      <a href="/" class="back-link">&larr; Back to Home</a>
+      <a href="/personal-blog/" class="back-link">&larr; Back to Home</a>
       <h1 class="page-title">Tags</h1>
       {sortedTags.length > 0 ? (
         <div class="tags-cloud">
           {sortedTags.map(([tag, count]) => (
-            <a href={`/tags/${tag}`} class="tag-item">
+            <a href={`/personal-blog/tags/${tag}`} class="tag-item">
               <span class="tag-name">{tag}</span>
               <span class="tag-count">{count}</span>
             </a>

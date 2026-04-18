@@ -5,13 +5,13 @@ const isHome = pathname === '/';
 
 <header class="navbar" class:list={{ scrolled: !isHome }}>
   <div class="navbar-inner">
-    <a href="/" class="logo">
+    <a href="/personal-blog/" class="logo">
       <span class="logo-text">My Blog</span>
     </a>
     <nav>
-      <a href="/" class:list={{ active: isHome }}>Home</a>
-      <a href="/about">About</a>
-      <a href="/tags">Tags</a>
+      <a href="/personal-blog/" class:list={{ active: isHome }}>Home</a>
+      <a href="/personal-blog/about">About</a>
+      <a href="/personal-blog/tags">Tags</a>
     </nav>
   </div>
 </header>

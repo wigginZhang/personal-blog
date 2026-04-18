@@ -28,7 +28,7 @@ const { tag, articles } = Astro.props;
 <BaseLayout title={`Tag: ${tag}`} description={`Articles tagged with ${tag}`}>
   <section class="content-section">
     <div class="content">
-      <a href="/tags" class="back-link">&larr; Back to Tags</a>
+      <a href="/personal-blog/tags" class="back-link">&larr; Back to Tags</a>
       <h1 class="page-title">Tag: {tag}</h1>
       <p class="tag-description">{articles.length} article{articles.length !== 1 ? 's' : ''} tagged with "{tag}"</p>
       <div class="articles-grid">
