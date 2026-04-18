@@ -1,0 +1,118 @@
+---
+interface Props {
+  title: string;
+  excerpt: string;
+  slug: string;
+  date: string;
+  tags?: string[];
+}
+
+const { title, excerpt, slug, date, tags = [] } = Astro.props;
+
+const formattedDate = new Date(date).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+});
+---
+
+<article class="card">
+  <a href={`/articles/${slug}`} class="card-link">
+    <div class="card-gradient"></div>
+    <div class="card-content">
+      <h2 class="card-title">{title}</h2>
+      <p class="card-excerpt">{excerpt}</p>
+      <div class="card-meta">
+        <time datetime={date}>{formattedDate}</time>
+        {tags.length > 0 && (
+          <div class="card-tags">
+            {tags.slice(0, 3).map(tag => (
+              <span class="tag">{tag}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </a>
+</article>
+
+<style>
+.card {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.card-gradient {
+  height: 4px;
+  background: var(--gradient);
+}
+
+.card-content {
+  padding: var(--space-lg);
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card:hover .card-title {
+  color: var(--accent);
+}
+
+.card-excerpt {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+}
+
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.card-tags {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.tag {
+  background: var(--bg-primary);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.card:hover .tag {
+  background: rgba(0, 97, 255, 0.1);
+}
+</style>
