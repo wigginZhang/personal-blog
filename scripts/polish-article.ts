@@ -10,24 +10,25 @@ const MINIMAX_API_URL = 'https://api.minimax.chat/v1/text/chatcompletion_v2';
 const MODEL_NAME = 'MiniMax-Text-01';
 
 async function polishText(rawText: string, apiKey: string): Promise<string> {
-  const prompt = `You are a blog writer. Transform the user's raw text into a polished personal blog article.
+  const prompt = `你是一位博客写手。将用户的中文原始文本润色成一篇精美的博客文章。
 
-Rules:
-- Write in first person, conversational tone
-- Add appropriate headings to structure the content
-- Use Markdown formatting (bold, italic, lists)
-- Preserve any code blocks as-is
-- Keep the original meaning and key points
-- Add small transitions if content feels disjointed
-- Remove obvious grammar mistakes but don't over-edit
+规则：
+- 使用第一人称，对话式风格
+- 添加适当的标题来组织内容结构
+- 使用 Markdown 格式（粗体、斜体、列表）
+- 保留代码块原样
+- 保持原意和核心观点
+- 添加过渡句让内容更连贯
+- 修正明显的语法错误但不要过度修改
+- 重要：文章必须保持中文输出
 
-User's raw text:
+用户原始文本：
 ${rawText}
 
-Respond with:
+请用以下格式回复：
 FILENAME: <slug>
 ---
-<polished markdown content>`;
+<润色后的中文 Markdown 内容>`;
 
   const response = await fetch(MINIMAX_API_URL, {
     method: 'POST',
