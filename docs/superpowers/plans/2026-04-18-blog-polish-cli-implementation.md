@@ -4,9 +4,11 @@
 
 **Goal:** Create a CLI tool that polishes raw text into blog-ready Markdown articles and optionally publishes to GitHub.
 
-**Architecture:** TypeScript CLI script using readline for input, OpenAI/Anthropic API for polishing, simple-git for GitHub publishing.
+**Architecture:** TypeScript CLI script using readline for input, MiniMax API for polishing (via native fetch), simple-git for GitHub publishing.
 
-**Tech Stack:** TypeScript, Node.js, OpenAI SDK, simple-git, tsx
+**Tech Stack:** TypeScript, Node.js (native fetch), simple-git, tsx
+
+**Note:** Uses MiniMax API via HTTP instead of OpenAI SDK.
 
 ---
 
@@ -33,9 +35,9 @@
 **Files:**
 - Modify: `package.json`
 
-- [ ] **Step 1: Install required packages**
+- [ ] **Step 1: Install simple-git package**
 
-Run: `npm install openai simple-git`
+Run: `npm install simple-git`
 
 - [ ] **Step 2: Add npm script to package.json**
 
@@ -53,8 +55,10 @@ Modify `package.json` to add:
 
 ```bash
 git add package.json package-lock.json
-git commit -m "feat: add polish CLI dependencies (openai, simple-git)"
+git commit -m "feat: add polish CLI dependency (simple-git)"
 ```
+
+**Note:** Uses native `fetch` for MiniMax API (built into Node.js 18+), no SDK needed.
 
 ---
 
@@ -122,18 +126,15 @@ git commit -m "feat: create polish CLI skeleton with text input"
 **Files:**
 - Modify: `scripts/polish-article.ts`
 
-- [ ] **Step 1: Add API call function**
+- [ ] **Step 1: Add MiniMax API call function**
 
 Replace the main function with:
 
 ```typescript
-import OpenAI from 'openai';
+const MINIMAX_API_URL = 'https://api.minimax.chat/v1/text/chatcompletion_v2';
+const MODEL_NAME = 'MiniMax-Text-01';
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-async function polishText(rawText: string): Promise<string> {
+async function polishText(rawText: string, apiKey: string): Promise<string> {
   const prompt = `You are a blog writer. Transform the user's raw text into a polished personal blog article.
 
 Rules:
@@ -153,13 +154,32 @@ FILENAME: <slug>
 ---
 <polished markdown content>`;
 
-  const response = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 4000,
+  const response = await fetch(MINIMAX_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: MODEL_NAME,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 4000,
+    }),
   });
 
-  return response.choices[0]?.message?.content ?? '';
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`MiniMax API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json() as { choices?: Array<{ messages?: Array<{ content?: string }> }> };
+  const content = data.choices?.[0]?.messages?.[0]?.content;
+
+  if (!content) {
+    throw new Error('Empty response from MiniMax API');
+  }
+
+  return content;
 }
 
 function parsePolishedOutput(output: string): { filename: string; content: string } {
@@ -207,12 +227,12 @@ async function main() {
     console.log('\n✍️  Polishing with AI...\n');
 
     try {
-      const apiKey = process.env.OPENAI_API_KEY;
+      const apiKey = process.env.MINIMAX_API_KEY;
       if (!apiKey) {
-        throw new Error('OPENAI_API_KEY environment variable not set');
+        throw new Error('MINIMAX_API_KEY environment variable not set');
       }
 
-      const polished = await polishText(rawText);
+      const polished = await polishText(rawText, apiKey);
       const { filename, content } = parsePolishedOutput(polished);
 
       console.log('=== Polished Result ===\n');
@@ -236,7 +256,7 @@ main().catch(console.error);
 
 - [ ] **Step 2: Test with actual API call**
 
-Run: `OPENAI_API_KEY=sk-xxx npm run polish`
+Run: `MINIMAX_API_KEY=your-key npm run polish`
 Paste some test text.
 Expected: Returns polished Markdown with filename.
 
@@ -244,7 +264,7 @@ Expected: Returns polished Markdown with filename.
 
 ```bash
 git add scripts/polish-article.ts
-git commit -m "feat: add AI polishing with OpenAI API"
+git commit -m "feat: add AI polishing with MiniMax API"
 ```
 
 ---
@@ -348,7 +368,7 @@ Please apply these modifications to the article while keeping the same FILENAME 
 
 - [ ] **Step 3: Test review flow**
 
-Run: `OPENAI_API_KEY=sk-xxx npm run polish`
+Run: `MINIMAX_API_KEY=your-key npm run polish`
 Test choosing 'm' for modify, then 'y' to accept.
 
 - [ ] **Step 4: Commit**
@@ -427,7 +447,7 @@ Replace the `// TODO: Add file save (Task 5)` section with:
 
 - [ ] **Step 3: Test file saving**
 
-Run: `OPENAI_API_KEY=sk-xxx npm run polish`
+Run: `MINIMAX_API_KEY=your-key npm run polish`
 Accept the result, check that file was created in `src/content/articles/`.
 
 - [ ] **Step 4: Commit**
@@ -497,7 +517,7 @@ Replace the `// TODO: Add GitHub publish step (Task 6)` section with:
 
 - [ ] **Step 3: Test publishing flow**
 
-Run: `OPENAI_API_KEY=sk-xxx npm run polish`
+Run: `MINIMAX_API_KEY=your-key npm run polish`
 Accept, choose 'y' for GitHub publish.
 Check GitHub for new commit.
 
@@ -520,13 +540,13 @@ git commit -m "feat: add GitHub publishing with git add/commit/push"
 Add at the start of `main()` after the console.log:
 
 ```typescript
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.MINIMAX_API_KEY;
   if (!apiKey) {
-    console.error('\n❌ Error: OPENAI_API_KEY environment variable not set\n');
+    console.error('\n❌ Error: MINIMAX_API_KEY environment variable not set\n');
     console.log('Set it with:');
-    console.log('  export OPENAI_API_KEY=sk-your-key\n');
+    console.log('  export MINIMAX_API_KEY=your-key\n');
     console.log('Or run with:');
-    console.log('  OPENAI_API_KEY=sk-your-key npm run polish\n');
+    console.log('  MINIMAX_API_KEY=your-key npm run polish\n');
     process.exit(1);
   }
 ```
@@ -608,13 +628,13 @@ git push
 cd ~/projects/personal-blog
 
 # Set API key
-export OPENAI_API_KEY=sk-xxx
+export MINIMAX_API_KEY=your-key
 
 # Run
 npm run polish
 
 # Or inline
-OPENAI_API_KEY=sk-xxx npm run polish
+MINIMAX_API_KEY=your-key npm run polish
 ```
 
 ---
