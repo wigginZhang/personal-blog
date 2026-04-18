@@ -64,6 +64,46 @@ function parsePolishedOutput(output: string): { filename: string; content: strin
   };
 }
 
+async function askQuestion(question: string): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim().toLowerCase());
+    });
+  });
+}
+
+async function getUserChoice(): Promise<'accept' | 'modify' | 'cancel'> {
+  const choice = await askQuestion('Accept this? (y)es / (m)odify / (n)o: ');
+
+  if (choice === 'y' || choice === 'yes' || choice === '') {
+    return 'accept';
+  } else if (choice === 'm' || choice === 'modify') {
+    return 'modify';
+  } else {
+    return 'cancel';
+  }
+}
+
+async function getModificationInstructions(): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  return new Promise((resolve) => {
+    rl.question('\nEnter your modification instructions: ', (instructions) => {
+      rl.close();
+      resolve(instructions);
+    });
+  });
+}
+
 async function main() {
   console.log('=== Blog Article Polisher ===\n');
   console.log('Paste your raw text below.');
@@ -111,7 +151,44 @@ async function main() {
       console.log('\n--- Content ---\n');
       console.log(content);
 
-      // TODO: Add interactive review step (Task 4)
+      let currentContent = content;
+      let currentFilename = filename;
+      let choice = await getUserChoice();
+
+      while (choice === 'modify') {
+        console.log('\n✍️  Re-polishing with your instructions...\n');
+
+        const instructions = await getModificationInstructions();
+        const rePolishPrompt = `Previous version:
+${currentContent}
+
+User's modification instructions: ${instructions}
+
+Please apply these modifications to the article while keeping the same FILENAME format.`;
+
+        const rePolished = await polishText(`${rawText}\n\n${rePolishPrompt}`, apiKey);
+        const parsed = parsePolishedOutput(rePolished);
+        currentFilename = parsed.filename;
+        currentContent = parsed.content;
+
+        console.log('=== Modified Result ===\n');
+        console.log(`Filename: ${currentFilename}`);
+        console.log('\n--- Content ---\n');
+        console.log(currentContent);
+
+        choice = await getUserChoice();
+      }
+
+      if (choice === 'cancel') {
+        console.log('\nCancelled. Exiting.');
+        process.exit(0);
+      }
+
+      // User accepted
+      console.log('\n✅ Article accepted!');
+      console.log(`Filename: ${currentFilename}`);
+      console.log('\n📁 Ready to save.');
+
       // TODO: Add file save step (Task 5)
       // TODO: Add GitHub publish step (Task 6)
 
