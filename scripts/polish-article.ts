@@ -47,8 +47,8 @@ FILENAME: <slug>
     throw new Error(`MiniMax API error: ${response.status} - ${errorText}`);
   }
 
-  const data = await response.json() as { choices?: Array<{ messages?: Array<{ content?: string }> }> };
-  const content = data.choices?.[0]?.messages?.[0]?.content;
+  const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+  const content = data.choices?.[0]?.message?.content;
 
   if (!content) {
     throw new Error('Empty response from MiniMax API');
@@ -58,7 +58,7 @@ FILENAME: <slug>
 }
 
 function parsePolishedOutput(output: string): { filename: string; content: string } {
-  const match = output.match(/^FILENAME:\s*(.+?)\n---([\s\S]*)$/);
+  const match = output.match(/^FILENAME:\s*(.+?)\n+---([\s\S]*)$/);
   if (!match) {
     throw new Error('Failed to parse LLM output');
   }
