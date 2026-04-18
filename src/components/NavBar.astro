@@ -1,0 +1,72 @@
+---
+const { pathname } = Astro.url;
+const isHome = pathname === '/';
+---
+
+<header class="navbar" class:list={{ scrolled: !isHome }}>
+  <div class="navbar-inner">
+    <a href="/" class="logo">
+      <span class="logo-text">My Blog</span>
+    </a>
+    <nav>
+      <a href="/" class:list={{ active: isHome }}>Home</a>
+      <a href="/about">About</a>
+      <a href="/tags">Tags</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: transparent;
+  transition: background var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.navbar.scrolled {
+  background: var(--bg-nav);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-sm);
+}
+
+.navbar-inner {
+  max-width: var(--max-width-listing);
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.logo:hover {
+  text-decoration: none;
+}
+
+nav {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+nav a {
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+nav a:hover,
+nav a.active {
+  color: var(--accent);
+  text-decoration: none;
+}
+</style>
