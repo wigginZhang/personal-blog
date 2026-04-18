@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import * as fs from 'fs';
+import * as path from 'path';
 import * as readline from 'readline';
 
 const MINIMAX_API_URL = 'https://api.minimax.chat/v1/text/chatcompletion_v2';
@@ -104,6 +106,42 @@ async function getModificationInstructions(): Promise<string> {
   });
 }
 
+function generateFrontmatter(title: string, description: string, date: Date): string {
+  const dateStr = date.toISOString().split('T')[0];
+  return `---
+title: "${title}"
+description: "${description}"
+date: ${dateStr}
+tags: []
+---
+
+`;
+}
+
+function saveArticle(filename: string, content: string): string {
+  const articlesDir = path.join(process.cwd(), 'src', 'content', 'articles');
+
+  if (!fs.existsSync(articlesDir)) {
+    fs.mkdirSync(articlesDir, { recursive: true });
+  }
+
+  const fullFilename = `${filename}.md`;
+  const filePath = path.join(articlesDir, fullFilename);
+
+  const titleMatch = content.match(/^#\s+(.+)$/m);
+  const title = titleMatch ? titleMatch[1] : filename;
+
+  const paragraphs = content.split('\n\n').filter(p => !p.startsWith('#') && p.trim());
+  const description = paragraphs[0]?.replace(/[#*`]/g, '').substring(0, 160).trim() || '';
+
+  const frontmatter = generateFrontmatter(title, description, new Date());
+  const fullContent = frontmatter + content;
+
+  fs.writeFileSync(filePath, fullContent, 'utf-8');
+
+  return fullFilename;
+}
+
 async function main() {
   console.log('=== Blog Article Polisher ===\n');
   console.log('Paste your raw text below.');
@@ -184,12 +222,10 @@ Please apply these modifications to the article while keeping the same FILENAME 
         process.exit(0);
       }
 
-      // User accepted
-      console.log('\n✅ Article accepted!');
-      console.log(`Filename: ${currentFilename}`);
-      console.log('\n📁 Ready to save.');
+      // User accepted - save file
+      const savedFilename = saveArticle(currentFilename, currentContent);
+      console.log(`\n📁 Saved to: src/content/articles/${savedFilename}`);
 
-      // TODO: Add file save step (Task 5)
       // TODO: Add GitHub publish step (Task 6)
 
     } catch (error) {
