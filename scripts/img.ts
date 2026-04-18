@@ -60,17 +60,22 @@ function copyToClipboard(text: string): void {
   execSync(`echo '${text}' | pbcopy`);
 }
 
-registerCommand('paste', 'Paste image from clipboard', async () => {
+registerCommand('paste', 'Paste image from clipboard and copy link', async (args) => {
+  const customPath = args[0];
+
   if (!hasImageInClipboard()) {
-    console.error('No image in clipboard');
+    console.log('No image in clipboard.');
     return;
   }
 
   const filename = await saveImageFromClipboard();
-  const url = `/images/${filename}`;
-  copyToClipboard(url);
-  console.log(`Saved: ${filename}`);
-  console.log(`URL: ${url}`);
+  const relativePath = customPath || `./images/${filename}`;
+  const markdown = `![image](${relativePath})`;
+
+  copyToClipboard(markdown);
+
+  console.log(`📷 Saved: public/images/${filename}`);
+  console.log(`🔗 Copied: ${markdown}`);
 });
 
 registerCommand('list', 'List all images', async () => {
