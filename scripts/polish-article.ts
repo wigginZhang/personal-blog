@@ -68,21 +68,66 @@ async function pasteImagesInteractive(content: string): Promise<{ content: strin
 }
 
 async function askForImages(content: string): Promise<string> {
-  if (!content.includes('【图】')) {
-    return content;
+  const hasMarkers = content.includes('【图】');
+  const markerCount = (content.match(/【图】/g) || []).length;
+
+  if (hasMarkers) {
+    console.log(`\n📷 检测到 ${markerCount} 个【图】标记`);
   }
 
-  const markerCount = (content.match(/【图】/g) || []).length;
-  console.log(`\n📷 检测到 ${markerCount} 个【图】标记`);
-
-  const answer = await askQuestion('是否粘贴图片？(y/n): ');
+  const answer = await askQuestion(hasMarkers
+    ? '是否粘贴图片？(y/n): '
+    : '是否粘贴图片到文章末尾？(y/n): '
+  );
 
   if (answer.toLowerCase() === 'y' || answer === '') {
-    const { content: newContent } = await pasteImagesInteractive(content);
-    return newContent;
+    if (hasMarkers) {
+      const { content: newContent } = await pasteImagesInteractive(content);
+      return newContent;
+    } else {
+      const { content: newContent } = await pasteImagesToEnd(content);
+      return newContent;
+    }
   }
 
   return content;
+}
+
+async function pasteImagesToEnd(content: string): Promise<{ content: string; imagesUsed: number }> {
+  console.log('请依次 paste 图片，完成后输入 "done"\n');
+
+  let imageIndex = 0;
+  let currentContent = content;
+  const imageFilenames: string[] = [];
+
+  while (true) {
+    const answer = await askQuestion('> paste 图片 (或输入 "done" 结束): ');
+
+    if (answer.toLowerCase() === 'done') {
+      break;
+    }
+
+    if (!hasImageInClipboard()) {
+      console.log('  ⚠️ 剪贴板无图片，请先复制图片');
+      continue;
+    }
+
+    const filename = await saveImageFromClipboard();
+    imageFilenames.push(filename);
+    imageIndex++;
+
+    copyToClipboard(`![image](/personal-blog/images/${filename})`);
+    console.log(`  ✅ 第 ${imageIndex} 张已保存: ${filename}`);
+  }
+
+  if (imageFilenames.length > 0) {
+    const imagesMarkdown = imageFilenames
+      .map(f => `![image](/personal-blog/images/${f})`)
+      .join('\n');
+    currentContent = currentContent.trim() + '\n\n' + imagesMarkdown + '\n';
+  }
+
+  return { content: currentContent, imagesUsed: imageIndex };
 }
 
 function hasImageInClipboard(): boolean {
