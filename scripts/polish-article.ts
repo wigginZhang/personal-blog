@@ -268,13 +268,22 @@ FILENAME: <slug>
   return content;
 }
 
+function sanitizeSlug(slug: string): string {
+  return slug
+    .replace(/[<>:"/\\|?*\[\](){}@#$%^&*`~]/g, '') // Remove invalid filename chars
+    .replace(/\s+/g, '-')                           // Replace spaces with hyphens
+    .replace(/-+/g, '-')                             // Replace multiple hyphens
+    .replace(/^-|-$/g, '')                          // Trim leading/trailing hyphens
+    .toLowerCase();
+}
+
 function parsePolishedOutput(output: string): { filename: string; content: string } {
   const match = output.match(/^FILENAME:\s*(.+?)\n+---([\s\S]*)$/);
   if (!match) {
     throw new Error('Failed to parse LLM output');
   }
   return {
-    filename: match[1].trim(),
+    filename: sanitizeSlug(match[1].trim()),
     content: match[2].trim(),
   };
 }
