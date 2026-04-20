@@ -141,6 +141,13 @@ declare module 'astro:content' {
 
 	type ContentEntryMap = {
 		"articles": {
+"ai-in-my-workplace-ten-years-apart.md": {
+	id: "ai-in-my-workplace-ten-years-apart.md";
+  slug: "ai-in-my-workplace-ten-years-apart";
+  body: string;
+  collection: "articles";
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] };
 "hello-world.md": {
 	id: "hello-world.md";
   slug: "hello-world";
@@ -151,6 +158,13 @@ declare module 'astro:content' {
 "the-lazy-persons-guide-to-excel-mastery.md": {
 	id: "the-lazy-persons-guide-to-excel-mastery.md";
   slug: "the-lazy-persons-guide-to-excel-mastery";
+  body: string;
+  collection: "articles";
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] };
+"tu-cao-guo-nei-da-mo-xing-de-ju-ying.md": {
+	id: "tu-cao-guo-nei-da-mo-xing-de-ju-ying.md";
+  slug: "tu-cao-guo-nei-da-mo-xing-de-ju-ying";
   body: string;
   collection: "articles";
   data: InferEntrySchema<"articles">

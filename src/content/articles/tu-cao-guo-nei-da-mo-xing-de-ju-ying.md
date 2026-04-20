@@ -46,3 +46,6 @@ tags: []
 ---
 
 **最后，我想说**：AI 的发展之路还很长，我们有理由相信，随着技术的进步，国内的大模型也会变得越来越“成熟”。让我们拭目以待吧！
+
+![image](/personal-blog/images/20260420070516.-w3krmy.png)
+![image](/personal-blog/images/20260420070529.-74nwo1.png)
