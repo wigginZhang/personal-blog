@@ -16,6 +16,75 @@ function ensureImagesDir() {
   }
 }
 
+async function pasteImagesInteractive(content: string): Promise<{ content: string; imagesUsed: number }> {
+  const marker = '【图】';
+  const markerCount = (content.match(/【图】/g) || []).length;
+
+  if (markerCount === 0) {
+    console.log('\n📷 文章中无【图】标记');
+    return { content, imagesUsed: 0 };
+  }
+
+  console.log(`\n📷 检测到 ${markerCount} 个【图】标记`);
+  console.log('请依次 paste 图片（自动按顺序替换【图】），完成后输入 "done"\n');
+
+  let imageIndex = 0;
+  let currentContent = content;
+
+  while (true) {
+    const answer = await askQuestion('> paste 图片 (或输入 "done" 结束): ');
+
+    if (answer.toLowerCase() === 'done') {
+      break;
+    }
+
+    if (!hasImageInClipboard()) {
+      console.log('  ⚠️ 剪贴板无图片，请先复制图片');
+      continue;
+    }
+
+    const nextMarkerIndex = currentContent.indexOf(marker);
+    if (nextMarkerIndex === -1) {
+      console.log('  ⚠️ 所有【图】已替换完毕');
+      break;
+    }
+
+    const filename = await saveImageFromClipboard();
+    const imageMarkdown = `![image](/personal-blog/images/${filename})`;
+
+    currentContent = currentContent.replace(marker, imageMarkdown);
+    imageIndex++;
+
+    copyToClipboard(imageMarkdown);
+    console.log(`  ✅ 第 ${imageIndex} 张已插入: ${filename}`);
+  }
+
+  if (currentContent.includes(marker)) {
+    console.log('\n⚠️ 还有未替换的【图】，已移除');
+    currentContent = currentContent.replace(/【图】/g, '');
+  }
+
+  return { content: currentContent, imagesUsed: imageIndex };
+}
+
+async function askForImages(content: string): Promise<string> {
+  if (!content.includes('【图】')) {
+    return content;
+  }
+
+  const markerCount = (content.match(/【图】/g) || []).length;
+  console.log(`\n📷 检测到 ${markerCount} 个【图】标记`);
+
+  const answer = await askQuestion('是否粘贴图片？(y/n): ');
+
+  if (answer.toLowerCase() === 'y' || answer === '') {
+    const { content: newContent } = await pasteImagesInteractive(content);
+    return newContent;
+  }
+
+  return content;
+}
+
 function hasImageInClipboard(): boolean {
   try {
     const result = execSync('osascript -e "try" -e "clipboard info" -e "end try"', { encoding: 'utf-8' });
@@ -305,38 +374,16 @@ async function main() {
 
     try {
       const polished = await polishText(rawText, apiKey);
-      const { filename, content } = parsePolishedOutput(polished);
+      const { filename, content: polishedContent } = parsePolishedOutput(polished);
 
-      const clipboardHasImage = hasImageInClipboard();
-      const imageFilenames: string[] = [];
-
-      if (clipboardHasImage) {
-        console.log('\n📷 检测到剪贴板有图片，正在保存...');
-        const imgFilename = await saveImageFromClipboard();
-        imageFilenames.push(imgFilename);
-      }
-
-      const { finalContent, imagesUsed } = processContentWithImages(
-        rawText,
-        content,
-        imageFilenames
-      );
+      let finalContent = await askForImages(polishedContent);
 
       console.log('=== Polished Result ===\n');
       console.log(`Suggested filename: ${filename}`);
       console.log('\n--- Content ---\n');
       console.log(finalContent);
 
-      if (imagesUsed > 0) {
-        console.log('\n📷 检测到' + imagesUsed + '张图片，已保存到 public/images/');
-        if (imageFilenames.length > 0) {
-          const link = `![image](/personal-blog/images/${imageFilenames[0]})`;
-          copyToClipboard(link);
-          console.log('🔗 已复制图片链接到剪贴板');
-        }
-      }
-
-      let currentContent = content;
+      let currentContent = finalContent;
       let currentFilename = filename;
       let choice = await getUserChoice();
 
