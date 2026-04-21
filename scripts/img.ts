@@ -2,6 +2,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as readline from 'readline';
 import { execSync } from 'child_process';
 
 const IMAGES_DIR = path.join(process.cwd(), 'public', 'images');
@@ -50,6 +51,20 @@ async function saveImageFromClipboard(): Promise<string> {
 
 function copyToClipboard(text: string): void {
   execSync(`echo '${text}' | pbcopy`);
+}
+
+async function askQuestion(question: string): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim().toLowerCase());
+    });
+  });
 }
 
 function getArticleFiles(): { slug: string; filepath: string }[] {
@@ -149,11 +164,6 @@ registerCommand('rm', 'Remove an image', async (args) => {
 registerCommand('add', 'Add image to existing article', async (args) => {
   const targetSlug = args[0];
 
-  if (!hasImageInClipboard()) {
-    console.log('📷 No image in clipboard. Paste an image first.');
-    return;
-  }
-
   const articles = getArticleFiles();
   if (articles.length === 0) {
     console.log('No articles found.');
@@ -179,16 +189,34 @@ registerCommand('add', 'Add image to existing article', async (args) => {
     return;
   }
 
-  const filename = await saveImageFromClipboard();
-  insertImageToArticle(targetFile, filename);
+  // Multi-image support: auto-detect and upload all images from clipboard
+  console.log('📷 请 paste 图片（自动检测并上传），完成后输入 "done"\n');
+  let imageIndex = 0;
 
-  const imagePath = `./images/${filename}`;
-  const markdown = `![image](${imagePath})`;
-  copyToClipboard(markdown);
+  while (true) {
+    if (!hasImageInClipboard()) {
+      const answer = await askQuestion('> paste 图片 (或输入 "done" 结束): ');
+      if (answer.toLowerCase() === 'done') break;
+      console.log('  ⚠️ 剪贴板无图片，请先复制图片');
+      continue;
+    }
 
-  console.log(`📷 Saved: public/images/${filename}`);
-  console.log(`🔗 Inserted into article`);
-  console.log(`🔗 Copied: ${markdown}`);
+    const filename = await saveImageFromClipboard();
+    insertImageToArticle(targetFile, filename);
+    imageIndex++;
+
+    const imagePath = `/personal-blog/images/${filename}`;
+    const markdown = `![image](${imagePath})`;
+    copyToClipboard(markdown);
+
+    console.log(`  ✅ 第 ${imageIndex} 张已保存: ${filename}`);
+  }
+
+  if (imageIndex > 0) {
+    console.log(`\n🔗 已插入 ${imageIndex} 张图片到文章`);
+  } else {
+    console.log('\n📷 未上传任何图片');
+  }
 });
 
 async function main() {
