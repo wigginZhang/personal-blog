@@ -26,37 +26,38 @@ async function pasteImagesInteractive(content: string): Promise<{ content: strin
   }
 
   console.log(`\n📷 检测到 ${markerCount} 个【图】标记`);
-  console.log('请依次 paste 图片（自动按顺序替换【图】），完成后输入 "done"\n');
+  console.log('请 paste 图片（自动检测并上传），完成后输入 "done"\n');
 
   let imageIndex = 0;
   let currentContent = content;
 
   while (true) {
+    // 自动检测剪贴板是否有图片
+    if (hasImageInClipboard()) {
+      const nextMarkerIndex = currentContent.indexOf(marker);
+      if (nextMarkerIndex === -1) {
+        console.log('  ⚠️ 所有【图】已替换完毕');
+        break;
+      }
+
+      const filename = await saveImageFromClipboard();
+      const imageMarkdown = `![image](/personal-blog/images/${filename})`;
+
+      currentContent = currentContent.replace(marker, imageMarkdown);
+      imageIndex++;
+
+      copyToClipboard(imageMarkdown);
+      console.log(`  ✅ 第 ${imageIndex} 张已插入: ${filename}`);
+      continue;
+    }
+
     const answer = await askQuestion('> paste 图片 (或输入 "done" 结束): ');
 
     if (answer.toLowerCase() === 'done') {
       break;
     }
 
-    if (!hasImageInClipboard()) {
-      console.log('  ⚠️ 剪贴板无图片，请先复制图片');
-      continue;
-    }
-
-    const nextMarkerIndex = currentContent.indexOf(marker);
-    if (nextMarkerIndex === -1) {
-      console.log('  ⚠️ 所有【图】已替换完毕');
-      break;
-    }
-
-    const filename = await saveImageFromClipboard();
-    const imageMarkdown = `![image](/personal-blog/images/${filename})`;
-
-    currentContent = currentContent.replace(marker, imageMarkdown);
-    imageIndex++;
-
-    copyToClipboard(imageMarkdown);
-    console.log(`  ✅ 第 ${imageIndex} 张已插入: ${filename}`);
+    console.log('  ⚠️ 剪贴板无图片，请先复制图片再粘贴');
   }
 
   if (currentContent.includes(marker)) {
@@ -94,30 +95,31 @@ async function askForImages(content: string): Promise<string> {
 }
 
 async function pasteImagesToEnd(content: string): Promise<{ content: string; imagesUsed: number }> {
-  console.log('请依次 paste 图片，完成后输入 "done"\n');
+  console.log('请 paste 图片（自动检测并上传），完成后输入 "done"\n');
 
   let imageIndex = 0;
   let currentContent = content;
   const imageFilenames: string[] = [];
 
   while (true) {
+    // 自动检测剪贴板是否有图片
+    if (hasImageInClipboard()) {
+      const filename = await saveImageFromClipboard();
+      imageFilenames.push(filename);
+      imageIndex++;
+
+      copyToClipboard(`![image](/personal-blog/images/${filename})`);
+      console.log(`  ✅ 第 ${imageIndex} 张已保存: ${filename}`);
+      continue;
+    }
+
     const answer = await askQuestion('> paste 图片 (或输入 "done" 结束): ');
 
     if (answer.toLowerCase() === 'done') {
       break;
     }
 
-    if (!hasImageInClipboard()) {
-      console.log('  ⚠️ 剪贴板无图片，请先复制图片');
-      continue;
-    }
-
-    const filename = await saveImageFromClipboard();
-    imageFilenames.push(filename);
-    imageIndex++;
-
-    copyToClipboard(`![image](/personal-blog/images/${filename})`);
-    console.log(`  ✅ 第 ${imageIndex} 张已保存: ${filename}`);
+    console.log('  ⚠️ 剪贴板无图片，请先复制图片再粘贴');
   }
 
   if (imageFilenames.length > 0) {
