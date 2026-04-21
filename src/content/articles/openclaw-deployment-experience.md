@@ -49,7 +49,3 @@ tags: []
 希望这篇文章能给大家带来一些启发。如果你也有类似的部署经验或建议，欢迎在评论区分享！
 
 ![image](/personal-blog/images/20260421062203.-i4txos.png)
-![image](/personal-blog/images/20260421062322.-034d9t.png)
-![image](/personal-blog/images/20260421062418.-yzlxff.png)
-![image](/personal-blog/images/20260421062641.-8mndzd.png)
-![image](/personal-blog/images/20260421062714.-v13ha5.png)
